@@ -9,7 +9,7 @@ import {
   EyeOff,
   KeyRound,
   Loader2,
-  Lock,  
+  Lock,
   Mail,
   Phone,
   Shield,
@@ -18,13 +18,14 @@ import {
 
 import { cn } from "@/lib/utils";
 
-type AuthMode = "login" | "signup" | "reset";
+type PrimaryAuthMode = "login" | "signup";
+type AuthMode = PrimaryAuthMode | "reset";
 type RegistrationStep = "details" | "verification" | "complete";
 
 interface AuthFormProps {
   onSuccess?: (userData: { email: string; name?: string }) => void;
   onClose?: () => void;
-  initialMode?: AuthMode;
+  initialMode?: PrimaryAuthMode;
   className?: string;
 }
 
@@ -123,6 +124,12 @@ function PasswordStrengthIndicator({ password }: { password: string }) {
 
 const baseInput =
   "w-full rounded-xl border bg-muted/50 py-3 placeholder:text-muted-foreground transition-all focus:outline-none focus:ring-2 focus:ring-primary/20";
+const primaryButtonClassName =
+  "w-full rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50";
+const textActionButtonClassName =
+  "block w-full text-center text-sm text-primary transition-colors hover:text-primary/80";
+const modeToggleButtonClassName =
+  "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all";
 
 export function AuthForm({
   onSuccess,
@@ -132,7 +139,7 @@ export function AuthForm({
 }: AuthFormProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [authMode, setAuthMode] = useState<AuthMode>(initialMode);
+  const [isResetMode, setIsResetMode] = useState(false);
   const [registrationStep, setRegistrationStep] = useState<RegistrationStep>("details");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -150,9 +157,10 @@ export function AuthForm({
     rememberMe: false,
     verificationCode: "",
   });
+  const authMode: AuthMode = isResetMode ? "reset" : initialMode;
 
   useEffect(() => {
-    setAuthMode(initialMode);
+    setIsResetMode(false);
     if (initialMode !== "signup") setRegistrationStep("details");
   }, [initialMode]);
 
@@ -165,8 +173,8 @@ export function AuthForm({
   }, [authMode]);
 
   const navigateToMode = useCallback(
-    (mode: "login" | "signup") => {
-      setAuthMode(mode);
+    (mode: PrimaryAuthMode) => {
+      setIsResetMode(false);
       setRegistrationStep("details");
       setErrors({});
       setSuccessMessage("");
@@ -238,7 +246,8 @@ export function AuthForm({
 
   const validateForm = useCallback(() => {
     const nextErrors: FormErrors = {};
-    const fieldsToValidate: (keyof FormData)[] = ["email", "password"];
+    const fieldsToValidate: (keyof FormData)[] =
+      authMode === "reset" ? ["email"] : ["email", "password"];
     if (authMode === "signup") fieldsToValidate.push("name", "confirmPassword", "agreeToTerms");
     if (registrationStep === "verification") fieldsToValidate.push("verificationCode");
     fieldsToValidate.forEach((field) => {
@@ -331,7 +340,7 @@ export function AuthForm({
             type="button"
             onClick={() => navigateToMode("login")}
             className={cn(
-              "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              modeToggleButtonClassName,
               authMode === "login" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -341,7 +350,7 @@ export function AuthForm({
             type="button"
             onClick={() => navigateToMode("signup")}
             className={cn(
-              "flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-all",
+              modeToggleButtonClassName,
               authMode === "signup" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
             )}
           >
@@ -374,7 +383,7 @@ export function AuthForm({
             <button
               type="submit"
               disabled={isLoading || !formData.email}
-              className="w-full rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+              className={primaryButtonClassName}
             >
               <span className="flex items-center justify-center gap-2">
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><KeyRound className="h-5 w-5" />Send Reset Link</>}
@@ -383,7 +392,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={() => navigateToMode("login")}
-              className="block w-full text-center text-sm text-primary transition-colors hover:text-primary/80"
+              className={textActionButtonClassName}
             >
               Back to Login
             </button>
@@ -411,14 +420,14 @@ export function AuthForm({
             <button
               type="submit"
               disabled={isLoading || formData.verificationCode.length !== 6}
-              className="w-full rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+              className={primaryButtonClassName}
             >
               {isLoading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : "Verify Email"}
             </button>
             <button
               type="button"
               onClick={() => setRegistrationStep("details")}
-              className="block w-full text-center text-sm text-primary transition-colors hover:text-primary/80"
+              className={textActionButtonClassName}
             >
               Back to Details
             </button>
@@ -437,7 +446,7 @@ export function AuthForm({
             <button
               type="button"
               onClick={onClose}
-              className="w-full rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90"
+              className={primaryButtonClassName}
             >
               Get Started
             </button>
@@ -548,7 +557,7 @@ export function AuthForm({
                   </label>
                   <button
                     type="button"
-                    onClick={() => setAuthMode("reset")}
+                    onClick={() => setIsResetMode(true)}
                     className="text-sm text-primary transition-colors hover:text-primary/80"
                   >
                     Forgot password?
@@ -575,7 +584,7 @@ export function AuthForm({
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-xl bg-primary px-6 py-3 font-medium text-primary-foreground transition-all hover:opacity-90 disabled:opacity-50"
+              className={primaryButtonClassName}
             >
               <span className="flex items-center justify-center gap-2">
                 {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : authMode === "login" ? "Sign In" : "Create Account"}
