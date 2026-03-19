@@ -28,6 +28,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import type { TooltipContentProps, TooltipValueType } from "recharts";
 
 import { Button } from "@/components/ui/button";
 
@@ -79,36 +80,122 @@ type DashboardData = {
 };
 
 const chartColors = [
-  "#38bdf8",
-  "#22c55e",
-  "#f59e0b",
-  "#f97316",
-  "#ef4444",
-  "#8b5cf6",
-  "#06b6d4",
+  "var(--chart-accent-1)",
+  "var(--chart-accent-2)",
+  "var(--chart-accent-3)",
+  "var(--chart-accent-4)",
+  "var(--chart-accent-5)",
+  "var(--chart-accent-6)",
+  "var(--chart-accent-7)",
 ];
 
 function formatDelta(delta: number) {
   return `${delta >= 0 ? "+" : ""}${delta.toFixed(1)}`;
 }
 
-function formatTooltipValue(
-  value: number | string | readonly (number | string)[] | undefined,
-  label: string,
-) {
-  if (Array.isArray(value)) {
-    return [value.join(", "), label];
-  }
+type RatingChartPoint = DashboardData["ratingHistory"][number] & {
+  pointKey: string;
+  tickLabel: string;
+};
 
-  return [typeof value === "number" || typeof value === "string" ? value : "-", label];
+function RatingChartTooltip({
+  active,
+  payload,
+}: Partial<TooltipContentProps<TooltipValueType, string>>) {
+  if (!active || !payload?.length) return null;
+
+  const entry = payload[0];
+  const point = entry?.payload as RatingChartPoint | undefined;
+  if (!point) return null;
+
+  const ratingValue =
+    typeof entry.value === "number" || typeof entry.value === "string"
+      ? entry.value
+      : point.rating;
+  const isPositiveDelta = point.delta >= 0;
+
+  return (
+    <div className="min-w-64 rounded-xl border border-border/80 bg-card/95 p-3 shadow-xl backdrop-blur">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {point.fullDate}
+      </p>
+      <p className="mt-1 text-sm font-semibold leading-snug text-foreground">
+        {point.contest}
+      </p>
+      <div className="mt-3 grid grid-cols-3 gap-3">
+        <div>
+          <p className="text-[11px] text-muted-foreground">Rating</p>
+          <p
+            className="text-base font-bold"
+            style={{ color: "var(--chart-accent-1)" }}
+          >
+            {ratingValue}
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground">Delta</p>
+          <p
+            className={
+              isPositiveDelta
+                ? "text-base font-bold text-emerald-500"
+                : "text-base font-bold text-rose-500"
+            }
+          >
+            {point.delta >= 0 ? "+" : ""}
+            {point.delta}
+          </p>
+        </div>
+        <div>
+          <p className="text-[11px] text-muted-foreground">Rank</p>
+          <p className="text-base font-semibold text-foreground">#{point.rank}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type SolvedByRatingPoint = DashboardData["solvedByRating"][number];
+
+function SolvedByRatingTooltip({
+  active,
+  payload,
+}: Partial<TooltipContentProps<TooltipValueType, string>>) {
+  if (!active || !payload?.length) return null;
+
+  const entry = payload[0];
+  const point = entry?.payload as SolvedByRatingPoint | undefined;
+  if (!point) return null;
+
+  const solvedValue =
+    typeof entry.value === "number" || typeof entry.value === "string"
+      ? entry.value
+      : point.solved;
+
+  return (
+    <div className="min-w-44 rounded-xl border border-border/80 bg-card/95 p-3 shadow-xl backdrop-blur">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        Rating Bucket
+      </p>
+      <p className="mt-1 text-sm font-semibold text-foreground">{point.rating}</p>
+      <div className="mt-3">
+        <p className="text-[11px] text-muted-foreground">Solved</p>
+        <p
+          className="text-base font-bold"
+          style={{ color: "var(--chart-accent-1)" }}
+        >
+          {solvedValue}
+        </p>
+      </div>
+    </div>
+  );
 }
 
 function getStreakLevel(count: number) {
   if (count === 0) return "bg-muted/60";
-  if (count <= 2) return "bg-cyan-900/70";
-  if (count <= 5) return "bg-cyan-700/80";
-  if (count <= 9) return "bg-cyan-500/85";
-  return "bg-emerald-400";
+  if (count <= 2) return "bg-cyan-200 dark:bg-cyan-900/70";
+  if (count <= 5) return "bg-cyan-300 dark:bg-cyan-700/80";
+  if (count <= 9) return "bg-cyan-400 dark:bg-cyan-500/85";
+  return "bg-emerald-500 dark:bg-emerald-400";
 }
 
 function formatCalendarDate(date: string) {
@@ -315,16 +402,16 @@ export function CodeforcesDashboard() {
   return (
     <section className="min-h-screen bg-background px-4 py-10 text-foreground md:px-8">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <div className="overflow-hidden rounded-4xl border border-border/60 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.18),transparent_40%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(15,23,42,0.9))] p-6 text-white shadow-2xl shadow-slate-950/20 md:p-8">
+        <div className="overflow-hidden rounded-4xl border border-border/60 bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.28),transparent_52%),linear-gradient(140deg,rgba(255,255,255,0.95),rgba(240,249,255,0.9))] p-6 text-slate-900 shadow-2xl shadow-slate-200/60 dark:bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.2),transparent_42%),linear-gradient(135deg,rgba(15,23,42,0.98),rgba(15,23,42,0.9))] dark:text-white dark:shadow-slate-950/20 md:p-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300/90">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-700 dark:text-cyan-300/90">
                 Codeforces Dashboard
               </p>
               <h1 className="mt-3 text-4xl font-black tracking-tight md:text-5xl">
                 Enter a Codeforces handle, then inspect live profile performance.
               </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
+              <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-700 dark:text-slate-300 md:text-base">
                 The dashboard pulls live data for the selected ID and shows total
                 solved problems, current rating, average rating change per contest,
                 the most active submission window, rating trend, solved-by-rating
@@ -334,19 +421,19 @@ export function CodeforcesDashboard() {
 
             <form
               onSubmit={handleSubmit}
-              className="flex w-full max-w-xl flex-col gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur md:flex-row"
+              className="flex w-full max-w-xl flex-col gap-3 rounded-3xl border border-sky-200/60 bg-white/65 p-4 backdrop-blur md:flex-row dark:border-white/10 dark:bg-white/5"
             >
               <label className="sr-only" htmlFor="cf-handle">
                 Codeforces handle
               </label>
               <div className="relative flex-1">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400" />
                 <input
                   id="cf-handle"
                   value={inputValue}
                   onChange={(event) => setInputValue(event.target.value)}
                   placeholder="Enter Codeforces handle"
-                  className="h-12 w-full rounded-2xl border border-white/10 bg-slate-950/60 pl-11 pr-4 text-sm text-white outline-none transition focus:border-cyan-400"
+                  className="h-12 w-full rounded-2xl border border-sky-200/70 bg-white/85 pl-11 pr-4 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus:border-cyan-500 dark:border-white/10 dark:bg-slate-950/60 dark:text-white dark:focus:border-cyan-400"
                 />
               </div>
               <Button type="submit" className="h-12 rounded-2xl px-6">
@@ -375,7 +462,7 @@ export function CodeforcesDashboard() {
         ) : null}
 
         {error ? (
-          <div className="rounded-4xl border border-rose-500/20 bg-rose-500/10 px-6 py-5 text-sm text-rose-200">
+          <div className="rounded-4xl border border-rose-500/20 bg-rose-500/10 px-6 py-5 text-sm text-rose-700 dark:text-rose-200">
             {error}
           </div>
         ) : null}
@@ -432,10 +519,10 @@ export function CodeforcesDashboard() {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span>Less</span>
                         <span className="h-3 w-3 rounded-sm bg-muted/60" />
-                        <span className="h-3 w-3 rounded-sm bg-cyan-900/70" />
-                        <span className="h-3 w-3 rounded-sm bg-cyan-700/80" />
-                        <span className="h-3 w-3 rounded-sm bg-cyan-500/85" />
-                        <span className="h-3 w-3 rounded-sm bg-emerald-400" />
+                        <span className="h-3 w-3 rounded-sm bg-cyan-200 dark:bg-cyan-900/70" />
+                        <span className="h-3 w-3 rounded-sm bg-cyan-300 dark:bg-cyan-700/80" />
+                        <span className="h-3 w-3 rounded-sm bg-cyan-400 dark:bg-cyan-500/85" />
+                        <span className="h-3 w-3 rounded-sm bg-emerald-500 dark:bg-emerald-400" />
                         <span>More</span>
                       </div>
                     </div>
@@ -505,7 +592,10 @@ export function CodeforcesDashboard() {
                     </div>
                     <div className="rounded-3xl border border-border/60 bg-muted/30 p-4">
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <Sparkles className="h-4 w-4 text-cyan-400" />
+                        <Sparkles
+                          className="h-4 w-4"
+                          style={{ color: "var(--chart-accent-1)" }}
+                        />
                         Longest streak
                       </div>
                       <p className="mt-3 text-4xl font-black tracking-tight">
@@ -556,7 +646,7 @@ export function CodeforcesDashboard() {
             </div>
 
             <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-              <div className="rounded-4xl border border-border/60 bg-card/90 p-6 shadow-sm">
+              <div className="rounded-4xl border border-border/60 bg-linear-to-b from-card to-muted/15 p-6 shadow-sm">
                 <div className="mb-6">
                   <h3 className="text-xl font-bold">Current Rating Graph</h3>
                   <p className="text-sm text-muted-foreground">
@@ -564,18 +654,24 @@ export function CodeforcesDashboard() {
                     from the live profile data.
                   </p>
                 </div>
-                <div className="h-85 w-full">
+                <div className="h-85 w-full rounded-3xl border border-border/60 bg-background/45 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={ratingChartData}
                       margin={{ top: 8, right: 20, left: 8, bottom: 8 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
+                      <CartesianGrid
+                        stroke="var(--color-border)"
+                        strokeDasharray="4 4"
+                        opacity={0.6}
+                        vertical={false}
+                      />
                       <XAxis
                         dataKey="pointKey"
                         tickLine={false}
                         axisLine={false}
                         minTickGap={24}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                         tickFormatter={(_, index) =>
                           ratingChartData[index]?.tickLabel ?? ""
                         }
@@ -584,23 +680,27 @@ export function CodeforcesDashboard() {
                         tickLine={false}
                         axisLine={false}
                         width={48}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
                         domain={["dataMin - 50", chartCeiling ?? "dataMax + 50"]}
                       />
                       <Tooltip
-                        formatter={(value) => formatTooltipValue(value, "Rating")}
-                        labelFormatter={(_, payload) =>
-                          payload?.[0]?.payload?.contest ?? "Contest"
-                        }
+                        cursor={{ stroke: "var(--color-border)", strokeWidth: 1 }}
+                        content={<RatingChartTooltip />}
                       />
-                      <Legend />
+                      <Legend
+                        wrapperStyle={{ paddingTop: 10 }}
+                        formatter={(value) => (
+                          <span className="text-sm text-muted-foreground">{value}</span>
+                        )}
+                      />
                       {typeof data.profile.maxRating === "number" ? (
                         <ReferenceLine
                           y={data.profile.maxRating}
-                          stroke="#f59e0b"
+                          stroke="var(--chart-accent-3)"
                           strokeDasharray="6 6"
                           label={{
                             value: `Max ${data.profile.maxRating}`,
-                            fill: "currentColor",
+                            fill: "var(--color-muted-foreground)",
                             fontSize: 12,
                             position: "insideTopRight",
                           }}
@@ -610,24 +710,34 @@ export function CodeforcesDashboard() {
                         type="monotone"
                         dataKey="rating"
                         name="Current rating"
-                        stroke="#38bdf8"
+                        stroke="var(--chart-accent-1)"
                         strokeWidth={3}
-                        dot={{ r: 3, strokeWidth: 2, fill: "#38bdf8" }}
-                        activeDot={{ r: 6, strokeWidth: 2, fill: "#0f172a" }}
+                        dot={{
+                          r: 4,
+                          strokeWidth: 2,
+                          fill: "var(--chart-accent-1)",
+                          stroke: "var(--color-card)",
+                        }}
+                        activeDot={{
+                          r: 7,
+                          strokeWidth: 3,
+                          fill: "var(--color-card)",
+                          stroke: "var(--chart-accent-1)",
+                        }}
                       />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
               </div>
 
-              <div className="rounded-4xl border border-border/60 bg-card/90 p-6 shadow-sm">
+              <div className="rounded-4xl border border-border/60 bg-linear-to-b from-card to-muted/15 p-6 shadow-sm">
                 <div className="mb-6">
                   <h3 className="text-xl font-bold">Questions Done By Rating</h3>
                   <p className="text-sm text-muted-foreground">
                     Unique accepted problems grouped by their Codeforces difficulty.
                   </p>
                 </div>
-                <div className="h-85 w-full">
+                <div className="h-85 w-full rounded-3xl border border-border/60 bg-background/45 p-3">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={data.solvedByRating.map((entry, index) => ({
@@ -636,11 +746,29 @@ export function CodeforcesDashboard() {
                       }))}
                       margin={{ top: 8, right: 12, left: 0, bottom: 8 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.12} />
-                      <XAxis dataKey="rating" tickLine={false} axisLine={false} />
-                      <YAxis tickLine={false} axisLine={false} width={36} />
-                      <Tooltip formatter={(value) => formatTooltipValue(value, "Solved")} />
-                      <Bar dataKey="solved" radius={[10, 10, 0, 0]} />
+                      <CartesianGrid
+                        stroke="var(--color-border)"
+                        strokeDasharray="4 4"
+                        opacity={0.6}
+                        vertical={false}
+                      />
+                      <XAxis
+                        dataKey="rating"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        width={36}
+                        tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
+                      />
+                      <Tooltip
+                        cursor={{ fill: "var(--color-muted)", opacity: 0.3 }}
+                        content={<SolvedByRatingTooltip />}
+                      />
+                      <Bar dataKey="solved" radius={[12, 12, 2, 2]} maxBarSize={54} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

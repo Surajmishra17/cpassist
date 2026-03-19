@@ -31,7 +31,7 @@ export function RatingGraph() {
     const pathD = `M ${ratingData.map(d => `${d.x},${d.y}`).join(" L ")}`
 
     return (
-        <div className="relative group p-8 rounded-3xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden shadow-2xl h-full min-h-[560px] flex flex-col">
+        <div className="relative group p-8 rounded-3xl border border-border bg-card/40 backdrop-blur-xl overflow-hidden shadow-2xl h-full min-h-140 flex flex-col">
             <div className="flex justify-between items-start mb-8">
                 <div>
                     <h3 className="text-sm font-bold text-primary uppercase tracking-widest mb-1">Performance Track</h3>
