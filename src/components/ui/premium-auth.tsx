@@ -272,6 +272,24 @@ export function AuthForm({
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       if (authMode === "login") {
+        const response = await fetch("/api/signIn", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          setErrors({ general: result.message || "Login failed" });
+          return;
+        }
+
         if (formData.rememberMe) {
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("rememberMe", "true");
@@ -279,11 +297,40 @@ export function AuthForm({
           localStorage.removeItem("userEmail");
           localStorage.removeItem("rememberMe");
         }
+
         setSuccessMessage("Login successful");
+
         onSuccess?.({ email: formData.email });
-      } else if (authMode === "signup" && registrationStep === "details") {
-        setRegistrationStep("verification");
-        setSuccessMessage("Account created! Please verify your email.");
+
+        router.push(result.redirectTo || "/dashboard");
+      }
+      else if (authMode === "signup" && registrationStep === "details") {
+        
+        const response = await fetch("/api/signup",{
+          method: "POST",
+          headers:{
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            email: formData.email,
+            password: formData.password,
+            phone: formData.phone
+          })
+        })
+
+        const result = await response.json()
+
+        if(!response.ok){
+          setErrors({
+            general: result.message || "Signup failed"
+          })
+          return
+        }
+
+        setRegistrationStep("verification")
+        setSuccessMessage("Verification code sent to your email")
+
       } else if (authMode === "signup") {
         setRegistrationStep("complete");
         setSuccessMessage("Email verified successfully!");

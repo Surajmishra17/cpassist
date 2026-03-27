@@ -4,6 +4,7 @@ import { AuthPageShell } from "@/components/blocks/auth-page-shell";
 import { AuthForm } from "@/components/ui/premium-auth";
 
 export default function SignupPage() {
+
   return (
     <AuthPageShell
       backgroundClassName="bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.16),_transparent_30%),linear-gradient(180deg,_var(--background),_color-mix(in_oklab,var(--background)_84%,white))]"
