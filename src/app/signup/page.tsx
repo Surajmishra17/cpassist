@@ -10,7 +10,7 @@ export default function SignupPage() {
       backgroundClassName="bg-[radial-gradient(circle_at_top_right,_rgba(34,197,94,0.16),_transparent_30%),linear-gradient(180deg,_var(--background),_color-mix(in_oklab,var(--background)_84%,white))]"
       gridClassName="lg:grid-cols-[0.95fr_1.05fr]"
     >
-      <section className="order-2 rounded-[2rem] border border-border/70 bg-background/85 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur lg:order-1">
+      <section className="order-2 rounded-4xl border border-border/70 bg-background/85 shadow-[0_30px_80px_-40px_rgba(15,23,42,0.45)] backdrop-blur lg:order-1">
         <AuthForm initialMode="signup" />
       </section>
 
